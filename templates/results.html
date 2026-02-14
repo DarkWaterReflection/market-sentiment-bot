@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial_scale=1.0">
+    <title>Sentiment Analysis Results - {{ ticker }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max_width: 900px;
+            margin-top: 50px;
+        }
+
+        .sentiment-score {
+            font-weight: bold;
+        }
+
+        .positive {
+            color: green;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .neutral {
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mb-5">
+        <h1 class="text-center mb-4">Analysis Results for {{ ticker }}</h1>
+        <a href="/" class="btn btn-secondary mb-3">&larr; Back to Search</a>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header">Sentiment Statistics</div>
+                    <div class="card-body">
+                        <p><strong>Average Sentiment:</strong> <span class="sentiment-score">{{ "%.2f"|format(stats.avg)
+                                }}</span></p>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Positive
+                                <span class="badge bg-success rounded-pill">{{ stats.positive }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Negative
+                                <span class="badge bg-danger rounded-pill">{{ stats.negative }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Neutral
+                                <span class="badge bg-secondary rounded-pill">{{ stats.neutral }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header">Sentiment Distribution</div>
+                    <div class="card-body text-center">
+                        {% if plot_url %}
+                        <img src="data:image/png;base64,{{ plot_url }}" class="img-fluid" alt="Sentiment Plot">
+                        {% else %}
+                        <p>No plot available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header">Headlines Analysis</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Headline</th>
+                                <th>Score</th>
+                                <th>Reasoning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in headlines %}
+                            <tr>
+                                <td class="small text-muted">{{ item.published[:16] }}</td>
+                                <td><a href="{{ item.link }}" target="_blank">{{ item.title }}</a></td>
+                                <td
+                                    class="sentiment-score {% if item.sentiment > 0 %}positive{% elif item.sentiment < 0 %}negative{% else %}neutral{% endif %}">
+                                    {{ "%.2f"|format(item.sentiment) }}
+                                </td>
+                                <td class="small">{{ item.reasoning }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

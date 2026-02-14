@@ -7,3 +7,5 @@ python-dotenv
 rich
 pytest
 feedparser
+Flask
+gunicorn
