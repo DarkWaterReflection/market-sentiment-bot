@@ -10,7 +10,7 @@ class SentimentAnalyzer:
             raise ValueError("GEMINI_API_KEY not found in environment variables.")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     def analyze_headlines(self, headlines):
         """
@@ -65,10 +65,18 @@ class SentimentAnalyzer:
             
         except Exception as e:
             print(f"Error during sentiment analysis: {e}")
-            # Fallback: add 0.0 sentiment
+            # Fallback: add 0.0 sentiment but include error in reasoning
+            error_msg = str(e)
+            if "429" in error_msg:
+                reasoning = "Error: API Quota Exceeded (Try again later)"
+            elif "404" in error_msg:
+                 reasoning = "Error: Model not found (Check API key/Region)"
+            else:
+                reasoning = f"Error: {error_msg[:50]}..."
+                
             for h in headlines:
                 h['sentiment'] = 0.0
-                h['reasoning'] = "Error in analysis"
+                h['reasoning'] = reasoning
             return headlines
 
 if __name__ == "__main__":
