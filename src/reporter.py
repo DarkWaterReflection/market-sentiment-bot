@@ -1,5 +1,4 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+import csv
 import os
 from datetime import datetime
 
@@ -13,43 +12,44 @@ class Reporter:
         """Saves the analyzed headlines to a CSV file."""
         if not headlines:
             print("No data to save.")
-            return None
+            return None, None
             
-        df = pd.DataFrame(headlines)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = os.path.join(self.data_dir, f"{ticker}_sentiment_{timestamp}.csv")
         
-        df.to_csv(filename, index=False)
-        print(f"Data saved to {filename}")
-        return filename, df
+        try:
+            keys = headlines[0].keys()
+            with open(filename, 'w', newline='', encoding='utf-8') as output_file:
+                dict_writer = csv.DictWriter(output_file, fieldnames=keys)
+                dict_writer.writeheader()
+                dict_writer.writerows(headlines)
+            
+            print(f"Data saved to {filename}")
+            return filename, headlines
+        except Exception as e:
+            print(f"Error saving to CSV: {e}")
+            return None, None
 
-    def generate_report(self, df, ticker):
-        """Generates a summary report and visualization."""
-        if df.empty:
+    def generate_report(self, data, ticker):
+        """Generates a summary report (text only)."""
+        if not data:
             return
 
-        avg_sentiment = df['sentiment'].mean()
+        sentiments = [h.get('sentiment', 0) for h in data]
+        if not sentiments:
+            return
+
+        avg_sentiment = sum(sentiments) / len(sentiments)
+        positive = sum(1 for s in sentiments if s > 0)
+        negative = sum(1 for s in sentiments if s < 0)
+        neutral = sum(1 for s in sentiments if s == 0)
+
         print(f"\n--- Sentiment Report for {ticker} ---")
         print(f"Average Sentiment: {avg_sentiment:.2f}")
-        print(f"Positive: {len(df[df['sentiment'] > 0])}")
-        print(f"Negative: {len(df[df['sentiment'] < 0])}")
-        print(f"Neutral: {len(df[df['sentiment'] == 0])}")
-        
-        # Visualization
-        plt.figure(figsize=(10, 6))
-        
-        # Histogram
-        plt.hist(df['sentiment'], bins=20, color='skyblue', edgecolor='black')
-        plt.title(f"Sentiment Distribution for {ticker}")
-        plt.xlabel("Sentiment Score (-1 to +1)")
-        plt.ylabel("Frequency")
-        plt.axvline(avg_sentiment, color='red', linestyle='dashed', linewidth=1, label=f'Mean: {avg_sentiment:.2f}')
-        plt.legend()
-        
-        plot_filename = os.path.join(self.data_dir, f"{ticker}_sentiment_plot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-        plt.savefig(plot_filename)
-        print(f"Plot saved to {plot_filename}")
-        plt.close()
+        print(f"Positive: {positive}")
+        print(f"Negative: {negative}")
+        print(f"Neutral: {neutral}")
+        print("-------------------------------------")
 
 if __name__ == "__main__":
     # Test execution

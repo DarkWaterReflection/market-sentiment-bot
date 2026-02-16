@@ -52,9 +52,10 @@ def main():
         task2 = progress.add_task(description="Analyzing sentiment with Gemini...", total=None)
         analyzed_data = analyzer.analyze_headlines(headlines)
 
-    # 4. Report & Visualize
-    csv_file, df = reporter.save_to_csv(analyzed_data, ticker)
-    reporter.generate_report(df, ticker)
+    # 4. Report
+    # save_to_csv now returns (filename, data_list) instead of (filename, df)
+    csv_file, _ = reporter.save_to_csv(analyzed_data, ticker)
+    reporter.generate_report(analyzed_data, ticker)
 
     # 5. Show Summary Table
     table = Table(title=f"Latest News & Sentiment for {ticker}")
@@ -73,7 +74,8 @@ def main():
         )
 
     console.print(table)
-    console.print(f"\n[bold]Full report saved to:[/bold] {csv_file}")
+    if csv_file:
+        console.print(f"\n[bold]Full report saved to:[/bold] {csv_file}")
 
 if __name__ == "__main__":
     main()

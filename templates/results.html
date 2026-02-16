@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial_scale=1.0">
     <title>Sentiment Analysis Results - {{ ticker }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -67,11 +68,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header">Sentiment Distribution</div>
                     <div class="card-body text-center">
-                        {% if plot_url %}
-                        <img src="data:image/png;base64,{{ plot_url }}" class="img-fluid" alt="Sentiment Plot">
-                        {% else %}
-                        <p>No plot available.</p>
-                        {% endif %}
+                        <canvas id="sentimentChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -108,6 +105,63 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const chartData = {{ chart_data | tojson }};
+        
+        // Calculate bins for histogram
+        const bins = Array(20).fill(0);
+        // bins cover -1.0 to 1.0.  Each bin width is 0.1
+        // -1.0 to -0.9, -0.9 to -0.8 ... 0.9 to 1.0
+        
+        chartData.forEach(score => {
+            // Clamp score between -1 and 1
+            const clampedScore = Math.max(-1, Math.min(1, score));
+            // Map -1..1 to 0..19
+            let binIndex = Math.floor((clampedScore + 1) * 10);
+            if (binIndex >= 20) binIndex = 19;
+            bins[binIndex]++;
+        });
+
+        const labels = [];
+        for (let i = 0; i < 20; i++) {
+            const start = -1 + (i * 0.1);
+            labels.push(start.toFixed(1));
+        }
+
+        const ctx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Frequency',
+                    data: bins,
+                    backgroundColor: 'rgba(135, 206, 235, 0.7)',
+                    borderColor: 'rgba(0, 0, 0, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Sentiment Score'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>
